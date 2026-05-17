@@ -6,19 +6,19 @@
 </module>
 """
 
-from dataclasses import dataclass
+from pydantic import BaseModel, ConfigDict
 
 
-@dataclass(frozen=True)
-class IntersectionPoint:
+class IntersectionPoint(BaseModel):
     """
     <summary>
-        Неизменяемый объект-значение, хранящий координаты точки
-        пересечения двух математических функций.
+        Неизменяемый объект-значение с координатами точки пересечения двух функций.
     </summary>
     <param name="x">Координата по оси x.</param>
-    <param name="y">Координата по оси y (вычисляется как f1(x) = f2(x)).</param>
+    <param name="y">Координата по оси y.</param>
     """
+
+    model_config = ConfigDict(frozen=True)
 
     x: float
     y: float

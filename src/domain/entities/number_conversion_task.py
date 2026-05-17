@@ -7,48 +7,52 @@
 </module>
 """
 
-from dataclasses import dataclass
+from pydantic import BaseModel, ConfigDict, model_validator
 
 _MIN_BASE = 2
 _MAX_BASE = 16
 
 
-@dataclass(frozen=True)
-class NumberConversionTask:
+class NumberConversionTask(BaseModel):
     """
     <summary>
         Неизменяемая сущность задачи перевода числа из системы счисления
         с основанием source_base в систему с основанием target_base.
+        Pydantic валидирует типы, model_validator проверяет диапазоны оснований.
     </summary>
-    <param name="number_string">
-        Строковое представление числа в исходной системе счисления.
-        Допустимы цифры 0–9 и буквы A–F (регистр не важен).
-    </param>
+    <param name="number_string">Строковое представление числа в исходной системе.</param>
     <param name="source_base">Основание исходной системы счисления (2–16).</param>
     <param name="target_base">Основание целевой системы счисления (2–16).</param>
-    <raises cref="ValueError">
-        Если основания выходят за пределы допустимого диапазона [2, 16].
+    <raises cref="ValidationError">
+        Если основания вне диапазона [2, 16] или поля имеют неверные типы.
     </raises>
     """
+
+    model_config = ConfigDict(frozen=True)
 
     number_string: str
     source_base: int
     target_base: int
 
-    def __post_init__(self) -> None:
+    @model_validator(mode="after")
+    def validate_bases_in_range(self) -> "NumberConversionTask":
         """
-        <summary>Валидирует основания систем счисления после инициализации.</summary>
-        <raises cref="ValueError">Если source_base или target_base вне диапазона [2, 16].</raises>
+        <summary>
+            Проверяет, что оба основания находятся в допустимом диапазоне [2, 16].
+        </summary>
+        <returns>Экземпляр сущности, если валидация прошла успешно.</returns>
+        <raises cref="ValueError">Если хотя бы одно из оснований вне диапазона.</raises>
         """
         self._validate_base(self.source_base, "исходной")
         self._validate_base(self.target_base, "целевой")
+        return self
 
     @staticmethod
     def _validate_base(base: int, system_label: str) -> None:
         """
-        <summary>Проверяет, что основание системы счисления находится в допустимом диапазоне.</summary>
+        <summary>Проверяет допустимость основания системы счисления.</summary>
         <param name="base">Проверяемое основание.</param>
-        <param name="system_label">Человекочитаемое описание системы (для сообщения об ошибке).</param>
+        <param name="system_label">Описание системы для сообщения об ошибке.</param>
         <raises cref="ValueError">Если основание вне диапазона [2, 16].</raises>
         """
         if not (_MIN_BASE <= base <= _MAX_BASE):
