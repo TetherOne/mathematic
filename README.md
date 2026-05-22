@@ -79,7 +79,7 @@ classDiagram
 
         class FindIntersectionsUseCase {
             -IPlotter _plotter
-            +execute(f1, f2) tuple
+            +execute(f1, f2) Tuple~points, Figure~
         }
 
         class ConvertNumberUseCase {
@@ -91,11 +91,14 @@ classDiagram
     namespace Application {
         class MathApplicationService {
             <<Facade>>
-            -IPlotter _plotter
-            -IFunctionParser _parser
+            -IFunctionParser _function_parser
+            -SolveQuadraticUseCase _solve_quadratic
+            -PlotFunctionUseCase _plot_function
+            -FindIntersectionsUseCase _find_intersections
+            -ConvertNumberUseCase _convert_number
             +solve_quadratic_equation(a, b, c) QuadraticSolution
             +plot_function(expr, x_min, x_max) Figure
-            +find_intersections(expr1, expr2, x_min, x_max) tuple
+            +find_intersections(expr1, expr2, x_min, x_max) Tuple
             +convert_number(number, src, tgt) str
         }
     }
@@ -121,19 +124,23 @@ classDiagram
         }
 
         class QuadraticTab {
-            +execute()
+            -MathApplicationService _service
+            +_on_solve()
         }
 
         class PlotTab {
-            +execute()
+            -MathApplicationService _service
+            +_on_plot()
         }
 
         class IntersectionTab {
-            +execute()
+            -MathApplicationService _service
+            +_on_find()
         }
 
         class ConversionTab {
-            +execute()
+            -MathApplicationService _service
+            +_on_convert()
         }
     }
 
@@ -150,16 +157,19 @@ classDiagram
     MathApplicationService --> PlotFunctionUseCase
     MathApplicationService --> FindIntersectionsUseCase
     MathApplicationService --> ConvertNumberUseCase
-    MathApplicationService --> IPlotter
-    MathApplicationService --> IFunctionParser
+    MathApplicationService --> IFunctionParser : DI в конструктор
+    MathApplicationService ..> IPlotter : DI в use cases при создании
 
     %% ─── Use cases работают с доменными объектами ───────────────
     SolveQuadraticUseCase ..> QuadraticEquation : принимает
     SolveQuadraticUseCase ..> QuadraticSolution : возвращает
+    FindIntersectionsUseCase ..> MathFunction : принимает
     FindIntersectionsUseCase ..> IntersectionPoint : возвращает
     ConvertNumberUseCase ..> NumberConversionTask : принимает
     PlotFunctionUseCase ..> MathFunction : принимает
     SafeFunctionParser ..> MathFunction : создаёт
+    MathApplicationService ..> QuadraticEquation : создаёт
+    MathApplicationService ..> NumberConversionTask : создаёт
 
     %% ─── GUI использует сервис ──────────────────────────────────
     AppWindow --> MathApplicationService
